@@ -2,6 +2,7 @@ package com.bookshop.entities;
 
 import com.bookshop.entities.permissions.UserEnum;
 import com.bookshop.entities.role.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.io.Serial;
@@ -32,6 +33,7 @@ public class UserEntity implements Serializable {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -121,6 +123,10 @@ public class UserEntity implements Serializable {
 
     public Set<Role> getRoles() {
         return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 
     @Override
