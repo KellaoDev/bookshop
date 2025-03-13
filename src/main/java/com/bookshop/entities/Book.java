@@ -41,15 +41,79 @@ public class Book implements Serializable {
     public Book() {
     }
 
-    public Book(Long id, String title, String isbn, String imageCover, Boolean isRented) {
+    public Book(Long id, String title, String isbn, String imageCover, Boolean isRented, Set<Author> authors, Category category) {
         this.id = id;
         this.title = title;
         this.isbn = isbn;
         this.imageCover = imageCover;
         this.isRented = isRented;
+        this.authors = authors;
+        this.category = category;
     }
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public String getImageCover() {
+        return imageCover;
+    }
+
+    public void setImageCover(String imageCover) {
+        this.imageCover = imageCover;
+    }
+
+    public Boolean getRented() {
+        return isRented;
+    }
+
+    public void setRented(Boolean rented) {
+        isRented = rented;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public Set<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(Set<Author> authors) {
+        this.authors = authors;
+    }
+
+    public List<Loan> getLoans() {
+        return loans;
+    }
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
+    }
 
     @Override
     public boolean equals(Object o) {

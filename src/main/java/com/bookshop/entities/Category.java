@@ -22,7 +22,7 @@ public class Category implements Serializable {
     @OneToMany(mappedBy = "category")
     private List<Book> books = new ArrayList<>();
 
-    public Category() {
+    public Category(String name) {
     }
 
     public Category(Long id, String name, List<Book> books) {

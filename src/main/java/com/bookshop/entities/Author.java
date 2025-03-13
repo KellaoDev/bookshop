@@ -23,7 +23,7 @@ public class Author implements Serializable {
     @ManyToMany(mappedBy = "authors")
     private List<Book> books = new ArrayList<>();
 
-    public Author() {
+    public Author(String name) {
     }
 
     public Author(Long id, String name, List<Book> books) {
