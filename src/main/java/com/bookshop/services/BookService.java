@@ -1,6 +1,8 @@
 package com.bookshop.services;
 
+import com.bookshop.dto.AuthorDTO;
 import com.bookshop.dto.BookDTO;
+import com.bookshop.dto.CategoryDTO;
 import com.bookshop.entities.Author;
 import com.bookshop.entities.Book;
 import com.bookshop.entities.Category;
@@ -9,7 +11,9 @@ import com.bookshop.repositories.BookRepository;
 import com.bookshop.repositories.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,18 +40,17 @@ public class BookService {
         return obj.orElseThrow();
     }
 
-    public Book createBook(BookDTO bookDTO) {
+    public Book createBook(BookDTO dto) {
         Book book = new Book();
-        book.setTitle(bookDTO.getTitle());
-        book.setIsbn(bookDTO.getIsbn());
-        book.setImageCover(bookDTO.getImageCover());
-        book.setRented(bookDTO.getRented());
+        book.setTitle(dto.getTitle());
+        book.setIsbn(dto.getIsbn());
+        book.setImageCover(dto.getImageCover());
 
-        Category category = categoryRepository.findByName(bookDTO.getCategory().getName())
-                .orElseGet(() -> categoryRepository.save(new Category(bookDTO.getCategory().getName())));
+        Category category = categoryRepository.findByName(dto.getCategory().getName())
+                .orElseGet(() -> categoryRepository.save(new Category(dto.getCategory().getName())));
         book.setCategory(category);
 
-        Set<Author> authors = bookDTO.getAuthors().stream()
+        Set<Author> authors = dto.getAuthors().stream()
                 .map(authorDTO -> authorRepository.findByName(authorDTO.getName())
                         .orElseGet(() -> authorRepository.save(new Author(authorDTO.getName()))))
                 .collect(Collectors.toSet());
@@ -56,6 +59,34 @@ public class BookService {
 
         return bookRepository.save(book);
     }
+
+    public void deleteBook(Long id) {
+        bookRepository.deleteById(id);
+    }
+
+    public Book updateBook(Long id, BookDTO dto) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Livro não encontrado"));
+
+        book.setTitle(dto.getTitle());
+        book.setIsbn(dto.getIsbn());
+        book.setImageCover(dto.getImageCover());
+
+        if (dto.getCategory() != null) {
+            Category category = categoryRepository.findByName(dto.getCategory().getName())
+                    .orElseGet(() -> categoryRepository.save(new Category(dto.getCategory().getName())));
+            book.setCategory(category);
+        }
+
+        Set<Author> authors = dto.getAuthors().stream()
+                .map(authorDTO -> authorRepository.findByName(authorDTO.getName())
+                        .orElseGet(() -> authorRepository.save(new Author(authorDTO.getName()))))
+                .collect(Collectors.toSet());
+        book.setAuthors(authors);
+
+        return bookRepository.save(book);
+    }
+
 
 
 }

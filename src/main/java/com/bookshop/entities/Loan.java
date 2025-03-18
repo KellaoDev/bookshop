@@ -2,14 +2,15 @@ package com.bookshop.entities;
 
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class Loan implements Serializable {
@@ -23,6 +24,7 @@ public class Loan implements Serializable {
     private LocalDate dateLoan;
     private LocalDate dateLoanPredicted;
     private LocalDate dateLoanReal;
+    private boolean returned;
     private int fine;
 
     @ManyToMany
@@ -31,21 +33,29 @@ public class Loan implements Serializable {
             joinColumns = @JoinColumn(name = "loan_id"),
             inverseJoinColumns = @JoinColumn(name = "book_id")
     )
+    @JsonManagedReference
     private Set<Book> books = new HashSet<>();
+
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
+    private List<CartItem> cartItems = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private UserEntity user;
 
     public Loan() {
     }
 
-    public Loan(Long id, LocalDate dateLoan, LocalDate dateLoanPredicted, LocalDate dateLoanReal, int fine, UserEntity user) {
+    public Loan(Long id, LocalDate dateLoan, LocalDate dateLoanPredicted, LocalDate dateLoanReal, boolean returned, int fine, Set<Book> books, List<CartItem> cartItems, UserEntity user) {
         this.id = id;
         this.dateLoan = dateLoan;
         this.dateLoanPredicted = dateLoanPredicted;
         this.dateLoanReal = dateLoanReal;
+        this.returned = returned;
         this.fine = fine;
+        this.books = books;
+        this.cartItems = cartItems;
         this.user = user;
     }
 
@@ -81,6 +91,14 @@ public class Loan implements Serializable {
         this.dateLoanReal = dateLoanReal;
     }
 
+    public boolean isReturned() {
+        return returned;
+    }
+
+    public void setReturned(boolean returned) {
+        this.returned = returned;
+    }
+
     public int getFine() {
         return fine;
     }
@@ -89,11 +107,11 @@ public class Loan implements Serializable {
         this.fine = fine;
     }
 
-    public Set<Book> getBook() {
+    public Set<Book> getBooks() {
         return books;
     }
 
-    public void setBook(Set<Book> books) {
+    public void setBooks(Set<Book> books) {
         this.books = books;
     }
 
@@ -103,6 +121,10 @@ public class Loan implements Serializable {
 
     public void setUser(UserEntity user) {
         this.user = user;
+    }
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
     }
 
     @Override

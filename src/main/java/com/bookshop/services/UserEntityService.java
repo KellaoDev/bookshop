@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -26,9 +25,9 @@ public class UserEntityService {
         return userEntityRepository.findAll();
     }
 
-    public UserEntity findById(Long id) {
-        Optional<UserEntity> obj = userEntityRepository.findById(id);
-        return obj.orElseThrow();
+    public UserEntity findByIdWithLoans(Long id) {
+        return userEntityRepository.findByIdWithLoans(id)
+        .orElseThrow(() -> new RuntimeException("Usuário não encontrado para empréstimos"));
     }
 
     public UserEntity insert(UserEntityDTO dto) {
@@ -57,22 +56,19 @@ public class UserEntityService {
         return userEntityRepository.save(obj);
     }
 
-    public void delete (Long id) {
-        userEntityRepository.deleteById(id);
-    }
-
-    public UserEntity update(Long id, UserEntity obj) {
+    public UserEntity update(Long id, UserEntityDTO dto) {
         UserEntity entity = userEntityRepository.getReferenceById(id);
-        updateData(entity, obj);
+
+        entity.setUsername(dto.getUsername());
+        entity.setEmail(dto.getEmail());
+        entity.setPassword(dto.getPassword());
+        entity.setCpf(dto.getCpf());
+        entity.setPhone(dto.getPhone());
+
         return userEntityRepository.save(entity);
     }
 
-    private void updateData(UserEntity entity, UserEntity obj) {
-        entity.setUsername(obj.getUsername());
-        entity.setEmail(obj.getEmail());
-        entity.setPassword(obj.getPassword());
-        entity.setCpf(obj.getCpf());
-        entity.setPhone(obj.getPhone());
+    public void delete(Long id) {
+        userEntityRepository.deleteById(id);
     }
-
 }

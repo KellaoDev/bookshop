@@ -1,6 +1,8 @@
 package com.bookshop.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.io.Serial;
@@ -18,12 +20,11 @@ public class Cart implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
-    private Instant moment;
-
+    @JsonIgnore
     @OneToMany(mappedBy = "id.cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> items = new ArrayList<>();
 
+    @JsonManagedReference
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -31,9 +32,9 @@ public class Cart implements Serializable {
     public Cart() {
     }
 
-    public Cart(Long id, Instant moment, UserEntity user) {
+    public Cart(Long id, Instant moment, List<CartItem> items, UserEntity user) {
         this.id = id;
-        this.moment = moment;
+        this.items = items;
         this.user = user;
     }
 
@@ -43,14 +44,6 @@ public class Cart implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Instant getMoment() {
-        return moment;
-    }
-
-    public void setMoment(Instant moment) {
-        this.moment = moment;
     }
 
     public UserEntity getUser() {

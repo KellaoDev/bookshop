@@ -2,15 +2,14 @@ package com.bookshop.entities;
 
 import com.bookshop.entities.permissions.UserEnum;
 import com.bookshop.entities.role.Role;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class UserEntity implements Serializable {
@@ -28,8 +27,10 @@ public class UserEntity implements Serializable {
     private String phone;
 
     @OneToMany(mappedBy = "user")
-    private List<Loan> loans;
+    @JsonManagedReference
+    private List<Loan> loans = new ArrayList<>();
 
+    @JsonBackReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
@@ -47,13 +48,16 @@ public class UserEntity implements Serializable {
     public UserEntity() {
     }
 
-    public UserEntity(Long id, String username, String email, String password, String cpf, String phone, UserEnum userEnum) {
+    public UserEntity(Long id, String username, String email, String password, String cpf, String phone, List<Loan> loans, Cart cart, Set<Role> roles, UserEnum userEnum) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.cpf = cpf;
         this.phone = phone;
+        this.loans = loans;
+        this.cart = cart;
+        this.roles = roles;
         this.userEnum = userEnum;
     }
 

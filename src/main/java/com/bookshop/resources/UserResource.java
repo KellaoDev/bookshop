@@ -24,9 +24,9 @@ public class UserResource {
         return ResponseEntity.ok().body(list);
     }
 
-    @GetMapping(value = "/{id}")
-    public ResponseEntity<UserEntity> findById(@PathVariable Long id) {
-        UserEntity obj = userEntityService.findById(id);
+    @GetMapping(value = "/loan/{id}")
+    public ResponseEntity<UserEntity> findByIdWithLoans(@PathVariable Long id) {
+        UserEntity obj = userEntityService.findByIdWithLoans(id);
         return ResponseEntity.ok().body(obj);
     }
 
@@ -38,16 +38,16 @@ public class UserResource {
         return ResponseEntity.created(uri).body(dto);
     }
 
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<UserEntity> update(@PathVariable Long id, @RequestBody UserEntityDTO dto) {
+        UserEntity update = userEntityService.update(id, dto);
+        return ResponseEntity.ok().body(update);
+    }
+
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userEntityService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping(value = "/{id}")
-    public ResponseEntity<UserEntity> update(@PathVariable Long id, @RequestBody UserEntity obj) {
-        obj = userEntityService.update(id, obj);
-        return ResponseEntity.ok().body(obj);
     }
 
 }

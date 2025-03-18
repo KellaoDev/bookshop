@@ -12,6 +12,19 @@ public class BookDTO {
     private Set<AuthorDTO> authors;
     private CategoryDTO category;
 
+    public BookDTO() {
+    }
+
+    public BookDTO(Long id, String title, String isbn, String imageCover, Boolean isRented, Set<AuthorDTO> authors, CategoryDTO category) {
+        this.id = id;
+        this.title = title;
+        this.isbn = isbn;
+        this.imageCover = imageCover;
+        this.isRented = isRented;
+        this.authors = authors;
+        this.category = category;
+    }
+
     public Long getId() {
         return id;
     }

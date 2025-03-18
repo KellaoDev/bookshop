@@ -1,8 +1,7 @@
 package com.bookshop.entities;
 
 import com.bookshop.entities.pk.CartItemPK;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -15,17 +14,32 @@ public class CartItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @EmbeddedId
-    private CartItemPK id = new CartItemPK();
+    private final CartItemPK id = new CartItemPK();
 
     private Integer quantityDays;
+
+    @ManyToOne
+    @MapsId("cart")
+    @JoinColumn(name = "cart_id", insertable = false, updatable = false)
+    private Cart cart; // Relacionamento com o Cart
+
+    @ManyToOne
+    @MapsId("book")
+    @JoinColumn(name = "book_id", insertable = false, updatable = false)
+    private Book book;
+
+    @ManyToOne
+    @JoinColumn(name = "loan_id")
+    private Loan loan;
 
     public CartItem() {
     }
 
-    public CartItem(Cart cart, Book book, Integer quantityDays) {
+    public CartItem(Cart cart, Book book, Integer quantityDays, Loan loan) {
         id.setCart(cart);
         id.setBook(book);
         this.quantityDays = quantityDays;
+        this.loan = loan;
     }
 
     public Cart getCart() {
@@ -50,6 +64,14 @@ public class CartItem implements Serializable {
 
     public void setQuantityDays(Integer quantityDays) {
         this.quantityDays = quantityDays;
+    }
+
+    public Loan getLoan() {
+        return loan;
+    }
+
+    public void setLoan(Loan loan) {
+        this.loan = loan;
     }
 
     @Override

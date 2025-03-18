@@ -1,12 +1,11 @@
 package com.bookshop.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 public class Author implements Serializable {
@@ -21,12 +20,17 @@ public class Author implements Serializable {
     private String name;
 
     @ManyToMany(mappedBy = "authors")
-    private List<Book> books = new ArrayList<>();
+    @JsonBackReference
+    private Set<Book> books = new HashSet<>();
 
-    public Author(String name) {
+    public Author() {
     }
 
-    public Author(Long id, String name, List<Book> books) {
+    public Author(String name) {
+        this.name = name;
+    }
+
+    public Author(Long id, String name, Set<Book> books) {
         this.id = id;
         this.name = name;
         this.books = books;
@@ -48,8 +52,12 @@ public class Author implements Serializable {
         this.name = name;
     }
 
-    public List<Book> getBooks() {
+    public Set<Book> getBooks() {
         return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
     }
 
     @Override

@@ -1,5 +1,8 @@
 package com.bookshop.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.io.Serial;
@@ -18,7 +21,6 @@ public class Book implements Serializable {
     private String title;
     private String isbn;
     private String imageCover;
-    private Boolean isRented = false;
 
     @ManyToMany
     @JoinTable(
@@ -26,27 +28,26 @@ public class Book implements Serializable {
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
+
     private Set<Author> authors = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @ManyToMany(mappedBy = "books")
-    private List<Loan> loans = new ArrayList<>();
 
-    @OneToMany(mappedBy = "id.book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> cartItems = new ArrayList<>();
+    @ManyToMany(mappedBy = "books")
+    @JsonBackReference
+    private final List<Loan> loans = new ArrayList<>();
 
     public Book() {
     }
 
-    public Book(Long id, String title, String isbn, String imageCover, Boolean isRented, Set<Author> authors, Category category) {
+    public Book(Long id, String title, String isbn, String imageCover, Set<Author> authors, Category category) {
         this.id = id;
         this.title = title;
         this.isbn = isbn;
         this.imageCover = imageCover;
-        this.isRented = isRented;
         this.authors = authors;
         this.category = category;
     }
@@ -83,14 +84,6 @@ public class Book implements Serializable {
         this.imageCover = imageCover;
     }
 
-    public Boolean getRented() {
-        return isRented;
-    }
-
-    public void setRented(Boolean rented) {
-        isRented = rented;
-    }
-
     public Category getCategory() {
         return category;
     }
@@ -109,10 +102,6 @@ public class Book implements Serializable {
 
     public List<Loan> getLoans() {
         return loans;
-    }
-
-    public List<CartItem> getCartItems() {
-        return cartItems;
     }
 
     @Override
