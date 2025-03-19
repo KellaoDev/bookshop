@@ -52,4 +52,12 @@ public class ExceptionsHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+    @ExceptionHandler(DatabaseException.class)
+    public ResponseEntity<StandardError> databaseException(DatabaseException e, HttpServletRequest request) {
+        String error = "Database exception";
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
 }
