@@ -14,5 +14,10 @@ public interface UserEntityRepository extends JpaRepository<UserEntity, Long> {
     @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.loans WHERE u.id = :id")
     Optional<UserEntity> findByIdWithLoans(@Param("id") Long id);
 
+    boolean existsByEmail(String email);
+    boolean existsByCpf(String cpf);
 
+    Optional<UserEntity> findByEmail(String email);
+
+    Optional<UserEntity> findByCpf(String cpf);
 }

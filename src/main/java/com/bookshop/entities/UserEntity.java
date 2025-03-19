@@ -26,7 +26,7 @@ public class UserEntity implements Serializable {
     private String cpf;
     private String phone;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Loan> loans = new ArrayList<>();
 

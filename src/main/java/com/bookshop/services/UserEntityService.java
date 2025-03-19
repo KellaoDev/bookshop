@@ -4,12 +4,18 @@ import com.bookshop.dto.UserEntityDTO;
 import com.bookshop.entities.UserEntity;
 import com.bookshop.entities.permissions.UserEnum;
 import com.bookshop.entities.role.Role;
+import com.bookshop.repositories.LoanRepository;
 import com.bookshop.repositories.RoleRepository;
 import com.bookshop.repositories.UserEntityRepository;
+import com.bookshop.services.exceptions.BusinessException;
+import com.bookshop.services.exceptions.ResourceNotFoundException;
+import com.bookshop.services.exceptions.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -21,16 +27,43 @@ public class UserEntityService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private LoanRepository loanRepository;
+
     public List<UserEntity> findAll() {
         return userEntityRepository.findAll();
     }
 
     public UserEntity findByIdWithLoans(Long id) {
         return userEntityRepository.findByIdWithLoans(id)
-        .orElseThrow(() -> new RuntimeException("Usuário não encontrado para empréstimos"));
+        .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado para id: " + id));
     }
 
+    @Transactional
     public UserEntity insert(UserEntityDTO dto) {
+
+        if (userEntityRepository.existsByEmail(dto.getEmail())) {
+            throw new BusinessException("E-mail já cadastrado.");
+        }
+        if (userEntityRepository.existsByCpf(dto.getCpf())) {
+            throw new BusinessException("CPF já cadastrado.");
+        }
+        if (dto.getUsername() == null || dto.getUsername().trim().isEmpty()) {
+            throw new ValidationException("O nome de usuário é obrigatório.");
+        }
+        if (dto.getEmail() == null || !dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new ValidationException("E-mail inválido.");
+        }
+        if (dto.getPassword() == null || dto.getPassword().length() < 6) {
+            throw new ValidationException("A senha deve ter pelo menos 6 caracteres.");
+        }
+        if(!dto.getPassword().equals(dto.getConfirmPassword())) {
+            throw new ValidationException("As senhas devem ser iguais.");
+        }
+        if (dto.getCpf() == null || dto.getCpf().length() != 11) {
+            throw new ValidationException("CPF inválido.");
+        }
+
         UserEntity obj = new UserEntity();
         obj.setId(dto.getId());
         obj.setUsername(dto.getUsername());
@@ -39,6 +72,11 @@ public class UserEntityService {
         obj.setCpf(dto.getCpf());
         obj.setPhone(dto.getPhone());
         obj.setUserEnum(dto.getUserEnum());
+
+        Role role = roleRepository.findByName("ROLE_" + dto.getUserEnum().name());
+        if (role == null) {
+            throw new ResourceNotFoundException("Role não encontrada para o tipo de usuário: " + dto.getUserEnum());
+        }
 
         if(obj.getUserEnum() == UserEnum.CLIENT) {
             Role roleClient = roleRepository.findByName("ROLE_CLIENT");
@@ -56,8 +94,30 @@ public class UserEntityService {
         return userEntityRepository.save(obj);
     }
 
+    @Transactional
     public UserEntity update(Long id, UserEntityDTO dto) {
-        UserEntity entity = userEntityRepository.getReferenceById(id);
+        UserEntity entity = userEntityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID: " + id));
+
+        Optional<UserEntity> existingEmail = userEntityRepository.findByEmail(dto.getEmail());
+        if (existingEmail.isPresent() && !existingEmail.get().getId().equals(id)) {
+            throw new BusinessException("E-mail já cadastrado.");
+        }
+
+        Optional<UserEntity> existingCpf = userEntityRepository.findByCpf(dto.getCpf());
+        if (existingCpf.isPresent() && !existingCpf.get().getId().equals(id)) {
+            throw new BusinessException("CPF já cadastrado.");
+        }
+
+        if (dto.getUsername() == null || dto.getUsername().trim().isEmpty()) {
+            throw new ValidationException("O nome de usuário é obrigatório.");
+        }
+        if (dto.getEmail() == null || !dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new ValidationException("E-mail inválido.");
+        }
+        if (dto.getCpf() == null || dto.getCpf().length() != 11) {
+            throw new ValidationException("CPF inválido.");
+        }
 
         entity.setUsername(dto.getUsername());
         entity.setEmail(dto.getEmail());
@@ -68,7 +128,19 @@ public class UserEntityService {
         return userEntityRepository.save(entity);
     }
 
+    @Transactional
     public void delete(Long id) {
-        userEntityRepository.deleteById(id);
+        UserEntity entity = userEntityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID:" + id));
+
+        if (entity.getUserEnum() == UserEnum.MANAGER) {
+            throw new BusinessException("O administrador principal não pode ser excluído.");
+        }
+
+        if (loanRepository.existsByUserIdAndReturnedFalse(id)) {
+            throw new BusinessException("Não é possível excluir o usuário, pois ele possui empréstimos não devolvidos.");
+        }
+
+        userEntityRepository.delete(entity);
     }
 }
