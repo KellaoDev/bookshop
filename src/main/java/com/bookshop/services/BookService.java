@@ -1,6 +1,8 @@
 package com.bookshop.services;
 
+import com.bookshop.dto.AuthorDTO;
 import com.bookshop.dto.BookDTO;
+import com.bookshop.dto.CategoryDTO;
 import com.bookshop.entities.Author;
 import com.bookshop.entities.Book;
 import com.bookshop.entities.Category;
@@ -41,14 +43,29 @@ public class BookService {
     public List<Book> getAllBooks() {
         try {
             return bookRepository.findAll();
-        } catch (EmptyResultDataAccessException e) {
-            throw new ResourceNotFoundException("Livros não encontrados.");
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao buscar todos os livros");
         }
     }
 
     public Book getBookById(Long id) {
         Optional<Book> obj = bookRepository.findById(id);
         return obj.orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado para id: " + id));
+    }
+
+    public List<BookDTO> searchBooks(String query) {
+        List<Book> books = bookRepository.searchBooks(query.toLowerCase());
+        return books.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    private BookDTO convert(Book book) {
+        return new BookDTO(
+                book.getId(),
+                book.getTitle(),
+                book.getIsbn(),
+                book.getAuthors().stream().map(author -> new AuthorDTO(author.getName())).collect(Collectors.toSet()),
+                new CategoryDTO(book.getCategory().getId(), book.getCategory().getName())
+        );
     }
 
     @Transactional

@@ -25,6 +25,14 @@ public class BookDTO {
         this.category = category;
     }
 
+    public BookDTO(Long id, String title, String isbn, Set<AuthorDTO> authors, CategoryDTO category) {
+        this.id = id;
+        this.title = title;
+        this.isbn = isbn;
+        this.authors = authors;
+        this.category = category;
+    }
+
     public Long getId() {
         return id;
     }

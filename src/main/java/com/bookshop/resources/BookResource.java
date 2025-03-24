@@ -30,6 +30,12 @@ public class BookResource {
         return ResponseEntity.ok().body(book);
     }
 
+    @GetMapping(value = "/search")
+    public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam String query) {
+        List<BookDTO> books = bookService.searchBooks(query);
+        return ResponseEntity.ok().body(books);
+    }
+
     @PostMapping
     public ResponseEntity<BookDTO> createBook(@RequestBody BookDTO dto) {
         bookService.createBook(dto);

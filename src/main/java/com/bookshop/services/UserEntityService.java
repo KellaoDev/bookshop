@@ -17,6 +17,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.xml.crypto.Data;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,10 +37,9 @@ public class UserEntityService {
     public List<UserEntity> findAll() {
         try {
             return userEntityRepository.findAll();
-        } catch (EmptyResultDataAccessException e) {
-            throw new ResourceNotFoundException("Usuários não encontrados.");
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao buscar todos os usuários");
         }
-
     }
 
     public UserEntity findByIdWithLoans(Long id) {
