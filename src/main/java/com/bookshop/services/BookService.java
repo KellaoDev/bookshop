@@ -39,7 +39,11 @@ public class BookService {
     private LoanRepository loanRepository;
 
     public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+        try {
+            return bookRepository.findAll();
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Livros não encontrados.");
+        }
     }
 
     public Book getBookById(Long id) {
@@ -50,7 +54,7 @@ public class BookService {
     @Transactional
     public Book createBook(BookDTO dto) {
         if (bookRepository.existsByIsbn(dto.getIsbn())) {
-            throw new BusinessException("A book with this ISBN already exists.");
+            throw new BusinessException("Livro com esse ISBN existente.");
         }
         if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
             throw new ValidationException("Título do livro é obrigatório.");
@@ -72,7 +76,7 @@ public class BookService {
         Category category = categoryRepository.findByName(dto.getCategory().getName())
                 .orElseGet(() -> categoryRepository.save(new Category(dto.getCategory().getName())));
         if (dto.getCategory().getName() == null || dto.getCategory().getName().isEmpty()) {
-            throw new ValidationException("Categoria é obrigatório");
+            throw new ValidationException("Categoria é obrigatório.");
         }
         book.setCategory(category);
 
@@ -81,14 +85,14 @@ public class BookService {
                         .orElseGet(() -> authorRepository.save(new Author(authorDTO.getName()))))
                 .collect(Collectors.toSet());
         if (dto.getAuthors() == null || dto.getAuthors().isEmpty()) {
-            throw new ValidationException("Autor é obrigatório");
+            throw new ValidationException("Autor é obrigatório.");
         }
         book.setAuthors(authors);
 
         try {
             return bookRepository.save(book);
         } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Erro ao salvar o livro no banco de dados");
+            throw new DatabaseException("Erro ao salvar o livro no banco de dados.");
         }
     }
 
@@ -153,6 +157,5 @@ public class BookService {
             throw new DatabaseException("Erro ao salvar o livro no banco de dados");
         }
     }
-
 
 }

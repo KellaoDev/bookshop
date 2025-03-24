@@ -2,11 +2,21 @@ package com.bookshop.services;
 
 import com.bookshop.dto.CartDTO;
 import com.bookshop.dto.CartItemDTO;
-import com.bookshop.entities.*;
+import com.bookshop.entities.Book;
+import com.bookshop.entities.Cart;
+import com.bookshop.entities.CartItem;
 import com.bookshop.entities.pk.CartItemPK;
-import com.bookshop.repositories.*;
+import com.bookshop.repositories.BookRepository;
+import com.bookshop.repositories.CartItemRepository;
+import com.bookshop.repositories.CartRepository;
+import com.bookshop.repositories.UserEntityRepository;
+import com.bookshop.services.exceptions.DatabaseException;
+import com.bookshop.services.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,7 +37,7 @@ public class CartService {
 
     public CartDTO getCartByUserId(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado para: " + userId));
 
         List<CartItemDTO> items = cart.getItems().stream()
                 .map(item -> new CartItemDTO(cart.getUser().getId(), item.getBook().getId(), item.getQuantityDays()))
@@ -36,9 +46,10 @@ public class CartService {
         return new CartDTO(cart.getUser().getId(), items);
     }
 
+    @Transactional
     public Cart addItemToCart(Long userId, CartItemDTO cartItemDTO) {
         var user = userEntityRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -48,7 +59,7 @@ public class CartService {
                 });
 
         Book book = bookRepository.findById(cartItemDTO.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado para: " + cartItemDTO.getBookId()));
 
         CartItemPK cartItemPK = new CartItemPK();
         cartItemPK.setCart(cart);
@@ -62,20 +73,26 @@ public class CartService {
             cartItem = new CartItem(cart, book, cartItemDTO.getQuantityDays(), null);
         }
 
-        cartItemRepository.save(cartItem);
-
-        return cartRepository.save(cart);
+        try {
+            cartItemRepository.save(cartItem);
+            return cartRepository.save(cart);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Carrinho ou item não encontrado");
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao salvar o carrinho ou item no banco de dados");
+        }
     }
 
+    @Transactional
     public Cart deleteItemFromCart(Long userId, Long bookId) {
         var user = userEntityRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Carrinho não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado."));
 
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Livro não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
 
         CartItemPK cartItemPK = new CartItemPK();
         cartItemPK.setCart(cart);
@@ -83,20 +100,22 @@ public class CartService {
 
 
         CartItem cartItem = (CartItem) cartItemRepository.findById(cartItemPK)
-                .orElseThrow(() -> new RuntimeException("Item não encontrado no carrinho"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item não encontrado no carrinho."));
 
-        cartItemRepository.delete(cartItem);
+        try {
+            cartItemRepository.delete(cartItem);
 
-        if (cartItemRepository.countByCart(cart) == 0) {
-            cartRepository.delete(cart);
-            return null;
+            if (cartItemRepository.countByCart(cart) == 0) {
+                cartRepository.delete(cart);
+                return null;
+            }
+
+            return cart;
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Carrinho ou item não encontrado");
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao salvar o carrinho ou item no banco de dados");
         }
 
-        return cart;
     }
-
-
-
-
-
 }

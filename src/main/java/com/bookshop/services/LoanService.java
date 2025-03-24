@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +29,7 @@ public class LoanService {
     @Autowired
     private LoanRepository loanRepository;
 
+    @Transactional
     public Loan finalizeLoan(Long cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado com o ID: " + cartId));
@@ -70,9 +72,10 @@ public class LoanService {
 
     }
 
+    @Transactional
     public Loan returnLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado com o ID: " + loanId));
+                .orElseThrow(() -> new ResourceNotFoundException("Empréstimo não encontrado com o ID: " + loanId));
 
         loan.setDateLoanReal(LocalDate.now());
         loan.setReturned(true);
@@ -98,6 +101,4 @@ public class LoanService {
         }
 
     }
-
-
 }

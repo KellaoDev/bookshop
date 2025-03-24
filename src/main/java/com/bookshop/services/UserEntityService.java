@@ -8,9 +8,12 @@ import com.bookshop.repositories.LoanRepository;
 import com.bookshop.repositories.RoleRepository;
 import com.bookshop.repositories.UserEntityRepository;
 import com.bookshop.services.exceptions.BusinessException;
+import com.bookshop.services.exceptions.DatabaseException;
 import com.bookshop.services.exceptions.ResourceNotFoundException;
 import com.bookshop.services.exceptions.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,12 +34,17 @@ public class UserEntityService {
     private LoanRepository loanRepository;
 
     public List<UserEntity> findAll() {
-        return userEntityRepository.findAll();
+        try {
+            return userEntityRepository.findAll();
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Usuários não encontrados.");
+        }
+
     }
 
     public UserEntity findByIdWithLoans(Long id) {
         return userEntityRepository.findByIdWithLoans(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado para id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado para id: " + id));
     }
 
     @Transactional
@@ -57,7 +65,7 @@ public class UserEntityService {
         if (dto.getPassword() == null || dto.getPassword().length() < 6) {
             throw new ValidationException("A senha deve ter pelo menos 6 caracteres.");
         }
-        if(!dto.getPassword().equals(dto.getConfirmPassword())) {
+        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
             throw new ValidationException("As senhas devem ser iguais.");
         }
         if (dto.getCpf() == null || dto.getCpf().length() != 11) {
@@ -78,20 +86,24 @@ public class UserEntityService {
             throw new ResourceNotFoundException("Role não encontrada para o tipo de usuário: " + dto.getUserEnum());
         }
 
-        if(obj.getUserEnum() == UserEnum.CLIENT) {
+        if (obj.getUserEnum() == UserEnum.CLIENT) {
             Role roleClient = roleRepository.findByName("ROLE_CLIENT");
             obj.setRoles(Set.of(roleClient));
         }
-        if(obj.getUserEnum() == UserEnum.SELLER) {
+        if (obj.getUserEnum() == UserEnum.SELLER) {
             Role roleSeller = roleRepository.findByName("ROLE_SELLER");
             obj.setRoles(Set.of(roleSeller));
         }
-        if(obj.getUserEnum() == UserEnum.MANAGER) {
+        if (obj.getUserEnum() == UserEnum.MANAGER) {
             Role roleManager = roleRepository.findByName("ROLE_MANAGER");
             obj.setRoles(Set.of(roleManager));
         }
 
-        return userEntityRepository.save(obj);
+        try {
+            return userEntityRepository.save(obj);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao salvar o usuário no banco de dados");
+        }
     }
 
     @Transactional
@@ -125,7 +137,13 @@ public class UserEntityService {
         entity.setCpf(dto.getCpf());
         entity.setPhone(dto.getPhone());
 
-        return userEntityRepository.save(entity);
+        try {
+            return userEntityRepository.save(entity);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Usuário não encontrado com o ID: " + id);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao salvar o usuário no banco de dados.");
+        }
     }
 
     @Transactional
@@ -141,6 +159,12 @@ public class UserEntityService {
             throw new BusinessException("Não é possível excluir o usuário, pois ele possui empréstimos não devolvidos.");
         }
 
-        userEntityRepository.delete(entity);
+        try {
+            userEntityRepository.delete(entity);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("Usuário não encontrado com o ID: " + id);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao salvar o usuário no banco de dados.");
+        }
     }
 }
