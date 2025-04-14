@@ -116,7 +116,7 @@ public class UserEntityService {
             throw new BusinessException("E-mail já cadastrado.");
         }
 
-        Optional<UserEntity> existingCpf = userEntityRepository.findByCpf(dto.getCpf());
+        Optional<UserEntity> existingCpf = Optional.ofNullable(userEntityRepository.findByCpf(dto.getCpf()));
         if (existingCpf.isPresent() && !existingCpf.get().getId().equals(id)) {
             throw new BusinessException("CPF já cadastrado.");
         }
